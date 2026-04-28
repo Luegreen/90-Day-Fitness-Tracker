@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>90-Day Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f7f8fc;
+    --card: #ffffff;
+    --border: #e2e5ee;
+    --text: #1a1d2e;
+    --muted: #6b7280;
+    --row-alt: #f9fafc;
+    --blue: #1a56db;
+    --green: #0e9f6e;
+    --purple: #7e22ce;
+    --orange: #ff5a1f;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  header {
+    background: var(--blue);
+    color: white;
+    padding: 2rem 2rem 1.5rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 12px rgba(26,86,219,0.18);
+  }
+
+  header h1 { font-size: 1.5rem; font-weight: 600; letter-spacing: -0.02em; }
+  header p { font-size: 0.85rem; opacity: 0.8; margin-top: 0.25rem; }
+
+  .stats-bar {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .stat {
+    background: rgba(255,255,255,0.12);
+    border-radius: 8px;
+    padding: 0.45rem 0.9rem;
+    font-size: 0.78rem;
+  }
+
+  .stat strong { font-size: 1.05rem; font-weight: 600; display: block; }
+
+  .progress-bar-wrap {
+    background: rgba(255,255,255,0.2);
+    border-radius: 99px;
+    height: 6px;
+    margin-top: 0.75rem;
+    overflow: hidden;
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    background: white;
+    border-radius: 99px;
+    transition: width 0.4s ease;
+  }
+
+  .controls {
+    padding: 0.75rem 2rem;
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    align-items: center;
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .filter-btn {
+    font-family: inherit;
+    font-size: 0.78rem;
+    font-weight: 500;
+    padding: 0.3rem 0.85rem;
+    border-radius: 99px;
+    border: 1.5px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .filter-btn:hover { border-color: var(--blue); color: var(--blue); }
+  .filter-btn.active { background: var(--blue); border-color: var(--blue); color: white; }
+
+  .reset-btn {
+    margin-left: auto;
+    font-family: inherit;
+    font-size: 0.78rem;
+    font-weight: 500;
+    padding: 0.3rem 0.85rem;
+    border-radius: 99px;
+    border: 1.5px solid #fee2e2;
+    background: transparent;
+    color: #dc2626;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .reset-btn:hover { background: #fee2e2; }
+
+  main {
+    padding: 1.5rem 2rem;
+    max-width: 700px;
+    margin: 0 auto;
+  }
+
+  .table-header {
+    display: grid;
+    grid-template-columns: 52px 90px 1fr 1fr 1fr;
+    border-bottom: 2px solid var(--border);
+    margin-bottom: 0.25rem;
+    padding-bottom: 0.4rem;
+  }
+
+  .col-header {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--muted);
+    text-align: center;
+    padding: 0 0.25rem;
+  }
+
+  .col-header:nth-child(1),
+  .col-header:nth-child(2) { text-align: left; }
+
+  .week-group { margin-bottom: 1.25rem; }
+
+  .week-label {
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 0 0 0.4rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 0.35rem;
+  }
+
+  .day-row {
+    display: grid;
+    grid-template-columns: 52px 90px 1fr 1fr 1fr;
+    align-items: center;
+    border-radius: 8px;
+    margin-bottom: 2px;
+    transition: background 0.12s;
+  }
+
+  .day-row:hover { background: var(--row-alt); }
+  .day-row.all-done { background: #f0fdf4; }
+  .day-row.today { background: #eef3ff; }
+
+  .day-row > * { padding: 0.5rem 0.25rem; }
+
+  .day-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--muted);
+    font-weight: 500;
+    text-align: left;
+    padding-left: 0.5rem;
+  }
+
+  .day-date {
+    font-size: 0.78rem;
+    color: var(--muted);
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  .today-pill {
+    display: inline-block;
+    background: var(--blue);
+    color: white;
+    font-size: 0.58rem;
+    font-weight: 600;
+    padding: 1px 5px;
+    border-radius: 99px;
+    margin-left: 4px;
+    vertical-align: middle;
+    letter-spacing: 0.04em;
+  }
+
+  .check-cell {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .checkbox {
+    width: 26px;
+    height: 26px;
+    border-radius: 7px;
+    border: 2px solid var(--border);
+    background: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    flex-shrink: 0;
+  }
+
+  .checkbox:hover { transform: scale(1.1); }
+
+  .checkbox.c-diet { background: var(--orange); border-color: var(--orange); }
+  .checkbox.c-jump { background: var(--purple); border-color: var(--purple); }
+  .checkbox.c-cardio { background: var(--green); border-color: var(--green); }
+
+  .checkbox:not(.c-diet):not(.c-jump):not(.c-cardio):hover { border-color: #aaa; }
+
+  .checkbox svg {
+    width: 13px; height: 13px;
+    stroke: white; stroke-width: 2.5;
+    stroke-linecap: round; stroke-linejoin: round;
+    fill: none; opacity: 0;
+    transition: opacity 0.12s;
+  }
+
+  .checkbox.c-diet svg,
+  .checkbox.c-jump svg,
+  .checkbox.c-cardio svg { opacity: 1; }
+
+  .legend {
+    display: flex;
+    gap: 1rem;
+    padding: 0.6rem 2rem;
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.75rem;
+    color: var(--muted);
+    font-weight: 500;
+  }
+
+  .legend-dot {
+    width: 12px; height: 12px;
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
+
+  @media (max-width: 500px) {
+    main { padding: 1rem; }
+    header { padding: 1.25rem 1rem 1rem; }
+    .controls, .legend { padding: 0.6rem 1rem; }
+    .day-row, .table-header { grid-template-columns: 44px 72px 1fr 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>90-Day Tracker</h1>
+  <p>Starting April 28, 2026 — check off diet, jump rope & cardio each day</p>
+  <div class="stats-bar">
+    <div class="stat"><strong id="stat-days">0</strong>days full</div>
+    <div class="stat"><strong id="stat-diet">0</strong>diet</div>
+    <div class="stat"><strong id="stat-jump">0</strong>jump rope</div>
+    <div class="stat"><strong id="stat-cardio">0</strong>cardio</div>
+    <div class="stat"><strong id="stat-pct">0%</strong>complete</div>
+  </div>
+  <div class="progress-bar-wrap">
+    <div class="progress-bar-fill" id="progress-fill" style="width:0%"></div>
+  </div>
+</header>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:#ff5a1f"></div>Diet</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#7e22ce"></div>Jump Rope</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#0e9f6e"></div>Cardio</div>
+</div>
+
+<div class="controls">
+  <button class="filter-btn active" onclick="setFilter('all',this)">All days</button>
+  <button class="filter-btn" onclick="setFilter('incomplete',this)">Incomplete</button>
+  <button class="filter-btn" onclick="setFilter('done',this)">Completed</button>
+  <button class="filter-btn" onclick="setFilter('today',this)">Today</button>
+  <button class="reset-btn" onclick="resetAll()">Reset all</button>
+</div>
+
+<main>
+  <div class="table-header">
+    <div class="col-header" style="text-align:left; padding-left:0.5rem;">#</div>
+    <div class="col-header" style="text-align:left;">Date</div>
+    <div class="col-header">Diet</div>
+    <div class="col-header">Jump Rope</div>
+    <div class="col-header">Cardio</div>
+  </div>
+  <div id="rows"></div>
+</main>
+
+<script>
+const START = new Date(2026, 3, 28);
+const TODAY = new Date(); TODAY.setHours(0,0,0,0);
+const KEY = 'tracker90_v1';
+
+function isoDate(d) { return d.toISOString().split('T')[0]; }
+function dayDate(i) { const d = new Date(START); d.setDate(d.getDate()+i); return d; }
+function fmt(d) { return d.toLocaleDateString('en-US',{month:'short',day:'numeric'}); }
+
+let state = {};
+try { state = JSON.parse(localStorage.getItem(KEY)) || {}; } catch {}
+function save() { localStorage.setItem(KEY, JSON.stringify(state)); }
+
+let filter = 'all';
+
+const SVG = `<svg viewBox="0 0 16 16"><polyline points="2.5,8.5 6.5,12.5 13.5,4.5"/></svg>`;
+
+function toggle(i, type) {
+  const k = `${i}-${type}`;
+  state[k] = !state[k];
+  save();
+  render();
+  updateStats();
+}
+
+function updateStats() {
+  let diet=0, jump=0, cardio=0, full=0;
+  for (let i=0;i<90;i++) {
+    const d=!!state[`${i}-diet`], j=!!state[`${i}-jump`], c=!!state[`${i}-cardio`];
+    if(d) diet++; if(j) jump++; if(c) cardio++;
+    if(d&&j&&c) full++;
+  }
+  document.getElementById('stat-days').textContent = full;
+  document.getElementById('stat-diet').textContent = diet;
+  document.getElementById('stat-jump').textContent = jump;
+  document.getElementById('stat-cardio').textContent = cardio;
+  const pct = Math.round((diet+jump+cardio)/(90*3)*100);
+  document.getElementById('stat-pct').textContent = pct+'%';
+  document.getElementById('progress-fill').style.width = pct+'%';
+}
+
+function render() {
+  const todayStr = isoDate(TODAY);
+  let html = '';
+  let weekDays = [];
+  let weekNum = 0;
+
+  function flushWeek() {
+    if (!weekDays.length) return;
+    html += `<div class="week-group"><div class="week-label">Week ${weekNum}</div>${weekDays.join('')}</div>`;
+    weekDays = [];
+  }
+
+  for (let i=0;i<90;i++) {
+    const d = dayDate(i);
+    const ds = isoDate(d);
+    const isToday = ds === todayStr;
+    const diet = !!state[`${i}-diet`];
+    const jump = !!state[`${i}-jump`];
+    const cardio = !!state[`${i}-cardio`];
+    const allDone = diet && jump && cardio;
+
+    if (i % 7 === 0) { flushWeek(); weekNum++; }
+
+    let hide = false;
+    if (filter==='incomplete' && allDone) hide=true;
+    if (filter==='done' && !allDone) hide=true;
+    if (filter==='today' && !isToday) hide=true;
+
+    let cls = 'day-row';
+    if (allDone) cls += ' all-done';
+    if (isToday) cls += ' today';
+
+    const todayPill = isToday ? `<span class="today-pill">TODAY</span>` : '';
+
+    weekDays.push(`
+      <div class="${cls}"${hide?' style="display:none"':''}>
+        <div class="day-num">Day ${i+1}</div>
+        <div class="day-date">${fmt(d)}${todayPill}</div>
+        <div class="check-cell">
+          <div class="checkbox${diet?' c-diet':''}" onclick="toggle(${i},'diet')" title="Diet">${SVG}</div>
+        </div>
+        <div class="check-cell">
+          <div class="checkbox${jump?' c-jump':''}" onclick="toggle(${i},'jump')" title="Jump Rope">${SVG}</div>
+        </div>
+        <div class="check-cell">
+          <div class="checkbox${cardio?' c-cardio':''}" onclick="toggle(${i},'cardio')" title="Cardio">${SVG}</div>
+        </div>
+      </div>`);
+  }
+  flushWeek();
+  document.getElementById('rows').innerHTML = html;
+}
+
+function setFilter(f, btn) {
+  filter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  render();
+}
+
+function resetAll() {
+  if (!confirm('Reset all checkboxes? This cannot be undone.')) return;
+  state = {}; save(); render(); updateStats();
+}
+
+render();
+updateStats();
+
+const todayStr = isoDate(TODAY);
+for (let i=0;i<90;i++) {
+  if (isoDate(dayDate(i)) === todayStr) {
+    setTimeout(() => {
+      const rows = document.querySelectorAll('.day-row');
+      if (rows[i]) rows[i].scrollIntoView({behavior:'smooth',block:'center'});
+    }, 200);
+    break;
+  }
+}
+</script>
+</body>
+</html>
